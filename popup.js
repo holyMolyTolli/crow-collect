@@ -133,57 +133,6 @@ async function handleConnectButtonClick() {
   }
 }
 
-
-document.addEventListener("DOMContentLoaded", async () => {
-  document.getElementById("connectButtonContainer").addEventListener("click", handleConnectButtonClick);
-});
-
-
-// document.addEventListener("DOMContentLoaded", function () {
-//   document.getElementById("connectButtonContainer").addEventListener("click", async function () {
-//     const activeTab = await getActiveTab();
-//     const url = activeTab.url;
-//     const urlObj = new URL(url);
-//     const hostname = urlObj.hostname;
-//     const cookies = await getCookiesForCurrentUrl(url);
-//     const userId = await getUserId();
-
-//     fetch(endpoint + "send_cookies", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         userId: userId,
-//         hostname: hostname,
-//         url: url,
-//         cookies: cookies,
-//       }),
-//     })
-//       .then((response) => response.json())
-//       .then((data) => {
-//         var newlyConnectedHomepage = data.response;
-
-//         const connectedHomepagesContainer = document.getElementById("connectedHomepages");
-
-//         const entryDiv = createHomepageEntry(newlyConnectedHomepage.hostname, newlyConnectedHomepage.timestamp);
-
-//         const existingEntry = Array.from(connectedHomepagesContainer.querySelectorAll(`div.homepage-entry`)).find((el) => el.querySelector("button.homepage-button").textContent.includes(newlyConnectedHomepage.hostname));
-
-//         if (existingEntry) {
-//           console.log("Replacing existing entry");
-//           console.log(existingEntry, entryDiv);
-//           connectedHomepagesContainer.replaceChild(entryDiv, existingEntry);
-//         } else {
-//           connectedHomepagesContainer.appendChild(entryDiv);
-//         }
-
-//         document.getElementById("connectButton").textContent = `Update ${hostname}`;
-//       })
-//       .catch((error) => console.error("Error:", error));
-//   });
-// });
-
 document.addEventListener("DOMContentLoaded", async function () {
   const loaderContainer = document.getElementById("loaderContainer");
   const loader = document.createElement("div");
@@ -231,4 +180,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     connectButton.textContent = `Update ${currentHostname}`;
   }
   loaderContainer.style.display = "none";
+
+  document.getElementById("connectButtonContainer").addEventListener("click", handleConnectButtonClick);
 });
