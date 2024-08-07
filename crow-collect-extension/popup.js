@@ -123,22 +123,13 @@ async function handleConnectButtonClick() {
 
     document.getElementById("connectButton").textContent = `Update Connection to ${hostname}`;
 
+    console.log("Sending message FETCHDATA");
     await chrome.runtime.sendMessage({ action: "fetchData" });
-    await loadConnectedHomepages();
+    const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
+    updateConnectButton(currentHostname, isCurrentPageConnected);
   } catch (error) {
     console.error("Error:", error);
   }
-}
-
-function createButton(className, id, text) {
-  const button = document.createElement("button");
-  button.className = className;
-  button.id = id;
-  button.textContent = text;
-  const div = document.createElement("div");
-  div.className = "homepage-entry";
-  div.appendChild(button);
-  return div;
 }
 
 async function loadConnectedHomepages() {
@@ -154,7 +145,12 @@ async function loadConnectedHomepages() {
   const currentHostname = currentUrlObj.hostname;
 
   const connectedHomepagesContainer = document.getElementById("connectedHomepages");
+  connectedHomepagesContainer.innerHTML = ""; // Clear existing entries before appending new ones
+
   const response = await chrome.runtime.sendMessage({ action: "getData" });
+  if (!response || !response.connectedHomepages) {
+    throw new Error("No data available");
+  }
   const connectedHomepagesSupabase = response.connectedHomepages;
 
   let isCurrentPageConnected = false;
@@ -166,32 +162,108 @@ async function loadConnectedHomepages() {
     connectedHomepagesContainer.appendChild(entryDiv);
   });
 
-  const buttonContainer = document.getElementById("buttonContainer");
-  buttonContainer.innerHTML = "";
+  loaderContainer.style.display = "none";
 
-  const connectButtonText = isCurrentPageConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
+  return { currentHostname, isCurrentPageConnected };
+}
+
+function updateConnectButton(currentHostname, isConnected) {
+  const connectButtonText = isConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
+  const connectButton = document.getElementById("connectButton");
+  connectButton.textContent = connectButtonText;
+}
+
+function addConnectButton(currentHostname, isConnected) {
+  const buttonContainer = document.getElementById("buttonContainer");
+  buttonContainer.innerHTML = ""; // Clear existing buttons before adding new ones
+
+  const connectButtonText = isConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
   const connectButton = createButton("connect-button", "connectButton", connectButtonText);
   const downloadButton = createButton("download-button", "downloadButton", "Update CrowCollect");
 
   buttonContainer.appendChild(connectButton);
   buttonContainer.appendChild(downloadButton);
+}
 
-  loaderContainer.style.display = "none";
+function createButton(className, id, text) {
+  const button = document.createElement("button");
+  button.className = className;
+  button.id = id;
+  button.textContent = text;
+  const div = document.createElement("div");
+  div.className = "homepage-entry";
+  div.appendChild(button);
+  return div;
+}
+
+// function createButton(className, id, text) {
+//   const button = document.createElement("button");
+//   button.className = className;
+//   button.id = id;
+//   button.textContent = text;
+//   const div = document.createElement("div");
+//   div.className = "homepage-entry";
+//   div.appendChild(button);
+//   return div;
+// }
+
+// async function loadConnectedHomepages() {
+//   const loaderContainer = document.getElementById("loaderContainer");
+//   const loader = document.createElement("div");
+//   loader.className = "loader";
+//   loaderContainer.appendChild(loader);
+//   loaderContainer.style.display = "flex";
+
+//   const currentActiveTab = await getActiveTab();
+//   const currentUrl = currentActiveTab.url;
+//   const currentUrlObj = new URL(currentUrl);
+//   const currentHostname = currentUrlObj.hostname;
+
+//   const connectedHomepagesContainer = document.getElementById("connectedHomepages");
+//   const response = await chrome.runtime.sendMessage({ action: "getData" });
+//   if (!response || !response.connectedHomepages) {
+//     throw new Error("No data available");
+//   }
+//   const connectedHomepagesSupabase = response.connectedHomepages;
+
+//   let isCurrentPageConnected = false;
+//   connectedHomepagesSupabase.forEach((site) => {
+//     if (site.hostname === currentHostname) {
+//       isCurrentPageConnected = true;
+//     }
+//     const entryDiv = createHomepageEntry(site.hostname, site.timestamp);
+//     connectedHomepagesContainer.appendChild(entryDiv);
+//   });
+
+//   const buttonContainer = document.getElementById("buttonContainer");
+//   buttonContainer.innerHTML = "";
+
+//   const connectButtonText = isCurrentPageConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
+//   const connectButton = createButton("connect-button", "connectButton", connectButtonText);
+//   const downloadButton = createButton("download-button", "downloadButton", "Update CrowCollect");
+
+//   buttonContainer.appendChild(connectButton);
+//   buttonContainer.appendChild(downloadButton);
+
+//   loaderContainer.style.display = "none";
+// }
+
+function handleDownloadButtonClick() {
+  var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
+  var destinationFolder = "crow-collect-extension";
+  downloadAndUpdate(downloadFolder, destinationFolder);
+
+  var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension/images?ref=main";
+  var destinationFolder = "crow-collect-extension/images";
+  downloadAndUpdate(downloadFolder, destinationFolder);
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  await loadConnectedHomepages();
+  const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
+  addConnectButton(currentHostname, isCurrentPageConnected);
+
   document.getElementById("connectButton").addEventListener("click", handleConnectButtonClick);
-
-  document.getElementById("downloadButton").addEventListener("click", function () {
-    var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
-    var destinationFolder = "crow-collect-extension";
-    downloadAndUpdate(downloadFolder, destinationFolder);
-
-    var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension/images?ref=main";
-    var destinationFolder = "crow-collect-extension/images";
-    downloadAndUpdate(downloadFolder, destinationFolder);
-  });
+  document.getElementById("downloadButton").addEventListener("click", handleDownloadButtonClick);
 });
 
 async function fetchFilesFromGitHub(apiUrl) {
