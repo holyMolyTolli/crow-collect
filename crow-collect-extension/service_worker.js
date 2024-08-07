@@ -29,7 +29,7 @@ async function fetchAndCacheData() {
 async function fetchData() {
   const userId = getExtensionId();
   try {
-    const response = await fetch(`${endpoint}get_connected_homepages`, {
+    const response = await fetch(`${endpoint}get_connected_hostnames`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: userId }),
