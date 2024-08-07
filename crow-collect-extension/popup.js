@@ -134,12 +134,11 @@ function createButton(className, id, text) {
   return div;
 }
 
-function createContainerButtons(currentHostname, isConnected) {
+function createContainerButtons() {
   const buttonContainer = document.getElementById("buttonContainer");
   buttonContainer.innerHTML = "";
 
-  const connectButtonText = isConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
-  const connectButton = createButton("connect-button", "connectButton", connectButtonText);
+  const connectButton = createButton("connect-button", "connectButton", "Connect Site");
   const downloadButton = createButton("download-button", "downloadButton", "Update CrowCollect");
 
   buttonContainer.appendChild(connectButton);
@@ -284,19 +283,18 @@ async function handleConnectButtonClick() {
     console.log("Sending message FETCHDATA");
     await chrome.runtime.sendMessage({ action: "fetchData" });
 
-    // showLoader();
     const { currentHostname, isCurrentPageConnected } = await updateConnectedHomepages();
     updateConnectButton(currentHostname, isCurrentPageConnected);
-    // hideLoader();
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
+  createContainerButtons();
   addLoader();
   const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
-  createContainerButtons(currentHostname, isCurrentPageConnected);
+  updateConnectButton(currentHostname, isConnected) 
   hideLoader();
 
   document.getElementById("connectButton").addEventListener("click", handleConnectButtonClick);
