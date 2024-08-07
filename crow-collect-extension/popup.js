@@ -206,7 +206,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension/images?ref=main";
     var destinationFolder = "crow-collect-extension/images";
     downloadAndUpdate(downloadFolder, destinationFolder);
-
   });
 });
 
