@@ -56,216 +56,6 @@ function timeSince(date) {
   return Math.floor(seconds) + " seconds ago";
 }
 
-function createHomepageEntry(hostname, timestamp) {
-  const entryDiv = document.createElement("div");
-  entryDiv.className = "homepage-entry";
-
-  const homepageButton = document.createElement("button");
-  homepageButton.className = "homepage-button";
-  homepageButton.textContent = hostname;
-  homepageButton.onclick = function () {
-    window.open(`http://${hostname}`, "_blank");
-  };
-
-  const updateInfo = document.createElement("span");
-  updateInfo.className = "update-info";
-  updateInfo.textContent = "Last Cookie Update:";
-  const breakElement = document.createElement("br");
-  updateInfo.appendChild(breakElement);
-  const timeText = document.createTextNode(`${timeSince(new Date(timestamp))}`);
-  updateInfo.appendChild(timeText);
-
-  entryDiv.appendChild(homepageButton);
-  entryDiv.appendChild(updateInfo);
-
-  return entryDiv;
-}
-
-async function handleConnectButtonClick() {
-  const activeTab = await getActiveTab();
-  console.log("activeTab:", activeTab);
-  const url = activeTab.url;
-  console.log("url:", url);
-  const urlObj = new URL(url);
-  const hostname = urlObj.hostname;
-  console.log("hostname:", hostname);
-  const cookies = await getCookiesForCurrentUrl(url);
-  const userId = getExtensionId();
-  console.log("cookies:", cookies);
-
-  try {
-    response = await fetch(endpoint + "send_cookies", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: userId,
-        hostname: hostname,
-        url: url,
-        cookies: cookies,
-      }),
-    });
-    data = await response.json();
-    var newlyConnectedHomepage = data.response;
-
-    const connectedHomepagesContainer = document.getElementById("connectedHomepages");
-    const entryDiv = createHomepageEntry(newlyConnectedHomepage.hostname, newlyConnectedHomepage.timestamp);
-    const existingEntry = Array.from(connectedHomepagesContainer.querySelectorAll(`div.homepage-entry`)).find((el) => el.querySelector("button.homepage-button").textContent.includes(newlyConnectedHomepage.hostname));
-
-    if (existingEntry) {
-      console.log("Replacing existing entry");
-      console.log(existingEntry, entryDiv);
-      connectedHomepagesContainer.replaceChild(entryDiv, existingEntry);
-    } else {
-      connectedHomepagesContainer.appendChild(entryDiv);
-    }
-
-    document.getElementById("connectButton").textContent = `Update Connection to ${hostname}`;
-
-    console.log("Sending message FETCHDATA");
-    await chrome.runtime.sendMessage({ action: "fetchData" });
-    const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
-    updateConnectButton(currentHostname, isCurrentPageConnected);
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
-
-async function loadConnectedHomepages() {
-  const loaderContainer = document.getElementById("loaderContainer");
-  const loader = document.createElement("div");
-  loader.className = "loader";
-  loaderContainer.appendChild(loader);
-  loaderContainer.style.display = "flex";
-
-  const currentActiveTab = await getActiveTab();
-  const currentUrl = currentActiveTab.url;
-  const currentUrlObj = new URL(currentUrl);
-  const currentHostname = currentUrlObj.hostname;
-
-  const connectedHomepagesContainer = document.getElementById("connectedHomepages");
-  connectedHomepagesContainer.innerHTML = ""; // Clear existing entries before appending new ones
-
-  const response = await chrome.runtime.sendMessage({ action: "getData" });
-  if (!response || !response.connectedHomepages) {
-    throw new Error("No data available");
-  }
-  const connectedHomepagesSupabase = response.connectedHomepages;
-
-  let isCurrentPageConnected = false;
-  connectedHomepagesSupabase.forEach((site) => {
-    if (site.hostname === currentHostname) {
-      isCurrentPageConnected = true;
-    }
-    const entryDiv = createHomepageEntry(site.hostname, site.timestamp);
-    connectedHomepagesContainer.appendChild(entryDiv);
-  });
-
-  loaderContainer.style.display = "none";
-
-  return { currentHostname, isCurrentPageConnected };
-}
-
-function updateConnectButton(currentHostname, isConnected) {
-  const connectButtonText = isConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
-  const connectButton = document.getElementById("connectButton");
-  connectButton.textContent = connectButtonText;
-}
-
-function addConnectButton(currentHostname, isConnected) {
-  const buttonContainer = document.getElementById("buttonContainer");
-  buttonContainer.innerHTML = ""; // Clear existing buttons before adding new ones
-
-  const connectButtonText = isConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
-  const connectButton = createButton("connect-button", "connectButton", connectButtonText);
-  const downloadButton = createButton("download-button", "downloadButton", "Update CrowCollect");
-
-  buttonContainer.appendChild(connectButton);
-  buttonContainer.appendChild(downloadButton);
-}
-
-function createButton(className, id, text) {
-  const button = document.createElement("button");
-  button.className = className;
-  button.id = id;
-  button.textContent = text;
-  const div = document.createElement("div");
-  div.className = "homepage-entry";
-  div.appendChild(button);
-  return div;
-}
-
-// function createButton(className, id, text) {
-//   const button = document.createElement("button");
-//   button.className = className;
-//   button.id = id;
-//   button.textContent = text;
-//   const div = document.createElement("div");
-//   div.className = "homepage-entry";
-//   div.appendChild(button);
-//   return div;
-// }
-
-// async function loadConnectedHomepages() {
-//   const loaderContainer = document.getElementById("loaderContainer");
-//   const loader = document.createElement("div");
-//   loader.className = "loader";
-//   loaderContainer.appendChild(loader);
-//   loaderContainer.style.display = "flex";
-
-//   const currentActiveTab = await getActiveTab();
-//   const currentUrl = currentActiveTab.url;
-//   const currentUrlObj = new URL(currentUrl);
-//   const currentHostname = currentUrlObj.hostname;
-
-//   const connectedHomepagesContainer = document.getElementById("connectedHomepages");
-//   const response = await chrome.runtime.sendMessage({ action: "getData" });
-//   if (!response || !response.connectedHomepages) {
-//     throw new Error("No data available");
-//   }
-//   const connectedHomepagesSupabase = response.connectedHomepages;
-
-//   let isCurrentPageConnected = false;
-//   connectedHomepagesSupabase.forEach((site) => {
-//     if (site.hostname === currentHostname) {
-//       isCurrentPageConnected = true;
-//     }
-//     const entryDiv = createHomepageEntry(site.hostname, site.timestamp);
-//     connectedHomepagesContainer.appendChild(entryDiv);
-//   });
-
-//   const buttonContainer = document.getElementById("buttonContainer");
-//   buttonContainer.innerHTML = "";
-
-//   const connectButtonText = isCurrentPageConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
-//   const connectButton = createButton("connect-button", "connectButton", connectButtonText);
-//   const downloadButton = createButton("download-button", "downloadButton", "Update CrowCollect");
-
-//   buttonContainer.appendChild(connectButton);
-//   buttonContainer.appendChild(downloadButton);
-
-//   loaderContainer.style.display = "none";
-// }
-
-function handleDownloadButtonClick() {
-  var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
-  var destinationFolder = "crow-collect-extension";
-  downloadAndUpdate(downloadFolder, destinationFolder);
-
-  var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension/images?ref=main";
-  var destinationFolder = "crow-collect-extension/images";
-  downloadAndUpdate(downloadFolder, destinationFolder);
-}
-
-document.addEventListener("DOMContentLoaded", async function () {
-  const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
-  addConnectButton(currentHostname, isCurrentPageConnected);
-
-  document.getElementById("connectButton").addEventListener("click", handleConnectButtonClick);
-  document.getElementById("downloadButton").addEventListener("click", handleDownloadButtonClick);
-});
-
 async function fetchFilesFromGitHub(apiUrl) {
   try {
     const response = await fetch(apiUrl, {
@@ -283,7 +73,7 @@ async function fetchFilesFromGitHub(apiUrl) {
   }
 }
 
-async function downloadAndUpdate(githubRepoContentsUrl, destinationFolder) {
+async function syncGitHubRepoToLocal(githubRepoContentsUrl, destinationFolder) {
   console.log("Starting download process...");
 
   try {
@@ -314,3 +104,201 @@ async function downloadAndUpdate(githubRepoContentsUrl, destinationFolder) {
     console.error("Error during file download and save:", error);
   }
 }
+
+function addLoader() {
+  const loaderContainer = document.getElementById("loaderContainer");
+  const loader = document.createElement("div");
+  loader.className = "loader";
+  loaderContainer.appendChild(loader);
+  loaderContainer.style.display = "flex";
+}
+
+function showLoader() {
+  const loaderContainer = document.getElementById("loaderContainer");
+  loaderContainer.style.display = "block";
+}
+
+function hideLoader() {
+  const loaderContainer = document.getElementById("loaderContainer");
+  loaderContainer.style.display = "none";
+}
+
+function createButton(className, id, text) {
+  const button = document.createElement("button");
+  button.className = className;
+  button.id = id;
+  button.textContent = text;
+  const div = document.createElement("div");
+  div.className = "homepage-entry";
+  div.appendChild(button);
+  return div;
+}
+
+function createContainerButtons(currentHostname, isConnected) {
+  const buttonContainer = document.getElementById("buttonContainer");
+  buttonContainer.innerHTML = "";
+
+  const connectButtonText = isConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
+  const connectButton = createButton("connect-button", "connectButton", connectButtonText);
+  const downloadButton = createButton("download-button", "downloadButton", "Update CrowCollect");
+
+  buttonContainer.appendChild(connectButton);
+  buttonContainer.appendChild(downloadButton);
+}
+
+function updateConnectButton(currentHostname, isConnected) {
+  const connectButtonText = isConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
+  const connectButton = document.getElementById("connectButton");
+  connectButton.textContent = connectButtonText;
+}
+
+function createHomepageEntry(hostname, timestamp) {
+  const entryDiv = document.createElement("div");
+  entryDiv.className = "homepage-entry";
+
+  const homepageButton = document.createElement("button");
+  homepageButton.className = "homepage-button";
+  homepageButton.textContent = hostname;
+  homepageButton.onclick = function () {
+    window.open(`http://${hostname}`, "_blank");
+  };
+
+  const updateInfo = document.createElement("span");
+  updateInfo.className = "update-info";
+  updateInfo.textContent = "Last Cookie Update:";
+  const breakElement = document.createElement("br");
+  updateInfo.appendChild(breakElement);
+  const timeText = document.createTextNode(`${timeSince(new Date(timestamp))}`);
+  updateInfo.appendChild(timeText);
+
+  entryDiv.appendChild(homepageButton);
+  entryDiv.appendChild(updateInfo);
+
+  return entryDiv;
+}
+
+async function loadConnectedHomepages() {
+  const currentActiveTab = await getActiveTab();
+  const currentUrl = currentActiveTab.url;
+  const currentUrlObj = new URL(currentUrl);
+  const currentHostname = currentUrlObj.hostname;
+
+  const response = await chrome.runtime.sendMessage({ action: "getData" });
+  if (!response || !response.connectedHomepages) {
+    throw new Error("No data available");
+  }
+  const connectedHomepagesSupabase = response.connectedHomepages;
+  connectedHomepagesSupabase.sort((a, b) => a.timestamp - b.timestamp);
+  console.log("Connected Homepages:", connectedHomepagesSupabase);
+
+  let isCurrentPageConnected = false;
+  const connectedHomepagesContainer = document.getElementById("connectedHomepages");
+  connectedHomepagesContainer.innerHTML = "";
+  connectedHomepagesSupabase.forEach((site) => {
+    if (site.hostname === currentHostname) {
+      isCurrentPageConnected = true;
+    }
+    const entryDiv = createHomepageEntry(site.hostname, site.timestamp);
+    connectedHomepagesContainer.appendChild(entryDiv);
+  });
+
+  return { currentHostname, isCurrentPageConnected };
+}
+
+function updateConnectedHomepagesEntry(containerOrId, hostname, timestamp) {
+  const connectedHomepagesContainer = typeof containerOrId === "string" ? document.getElementById(containerOrId) : containerOrId;
+
+  const entryDiv = createHomepageEntry(hostname, timestamp);
+  const existingEntry = Array.from(connectedHomepagesContainer.querySelectorAll(`div.homepage-entry`)).find((el) => el.querySelector("button.homepage-button").textContent.includes(hostname));
+
+  if (existingEntry) {
+    connectedHomepagesContainer.replaceChild(entryDiv, existingEntry);
+  } else {
+    connectedHomepagesContainer.appendChild(entryDiv);
+  }
+}
+
+async function updateConnectedHomepages() {
+  const currentActiveTab = await getActiveTab();
+  const currentUrl = currentActiveTab.url;
+  const currentUrlObj = new URL(currentUrl);
+  const currentHostname = currentUrlObj.hostname;
+
+  const response = await chrome.runtime.sendMessage({ action: "getData" });
+  if (!response || !response.connectedHomepages) {
+    throw new Error("No data available");
+  }
+  const connectedHomepagesSupabase = response.connectedHomepages;
+  // connectedHomepagesSupabase.sort((a, b) => a.timestamp - b.timestamp);
+  console.log("Connected Homepages:", connectedHomepagesSupabase);
+
+  let isCurrentPageConnected = false;
+  connectedHomepagesSupabase.forEach((site) => {
+    if (site.hostname === currentHostname) {
+      isCurrentPageConnected = true;
+    }
+    updateConnectedHomepagesEntry("connectedHomepages", site.hostname, site.timestamp);
+  });
+
+  return { currentHostname, isCurrentPageConnected };
+}
+
+function handleDownloadButtonClick() {
+  var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
+  var destinationFolder = "crow-collect-extension";
+  syncGitHubRepoToLocal(downloadFolder, destinationFolder);
+
+  var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension/images?ref=main";
+  var destinationFolder = "crow-collect-extension/images";
+  syncGitHubRepoToLocal(downloadFolder, destinationFolder);
+}
+
+async function handleConnectButtonClick() {
+  const activeTab = await getActiveTab();
+  const url = activeTab.url;
+  const urlObj = new URL(url);
+  const hostname = urlObj.hostname;
+  const cookies = await getCookiesForCurrentUrl(url);
+  const userId = getExtensionId();
+
+  try {
+    response = await fetch(endpoint + "send_cookies", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: userId,
+        hostname: hostname,
+        url: url,
+        cookies: cookies,
+      }),
+    });
+    data = await response.json();
+    var newlyConnectedHomepage = data.response;
+
+    updateConnectedHomepagesEntry("connectedHomepages", newlyConnectedHomepage.hostname, newlyConnectedHomepage.timestamp);
+
+    document.getElementById("connectButton").textContent = `Update Connection to ${hostname}`;
+
+    console.log("Sending message FETCHDATA");
+    await chrome.runtime.sendMessage({ action: "fetchData" });
+
+    // showLoader();
+    const { currentHostname, isCurrentPageConnected } = await updateConnectedHomepages();
+    updateConnectButton(currentHostname, isCurrentPageConnected);
+    // hideLoader();
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async function () {
+  addLoader();
+  const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
+  createContainerButtons(currentHostname, isCurrentPageConnected);
+  hideLoader();
+
+  document.getElementById("connectButton").addEventListener("click", handleConnectButtonClick);
+  document.getElementById("downloadButton").addEventListener("click", handleDownloadButtonClick);
+});
