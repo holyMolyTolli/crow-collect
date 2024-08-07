@@ -121,13 +121,27 @@ async function handleConnectButtonClick() {
       connectedHomepagesContainer.appendChild(entryDiv);
     }
 
-    document.getElementById("connectButton").textContent = `Update ${hostname}`;
+    document.getElementById("connectButton").textContent = `Update Connection to ${hostname}`;
+
+    await chrome.runtime.sendMessage({ action: "fetchData" });
+    await loadConnectedHomepages();
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
-document.addEventListener("DOMContentLoaded", async function () {
+function createButton(className, id, text) {
+  const button = document.createElement("button");
+  button.className = className;
+  button.id = id;
+  button.textContent = text;
+  const div = document.createElement("div");
+  div.className = "homepage-entry";
+  div.appendChild(button);
+  return div;
+}
+
+async function loadConnectedHomepages() {
   const loaderContainer = document.getElementById("loaderContainer");
   const loader = document.createElement("div");
   loader.className = "loader";
@@ -138,23 +152,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   const currentUrl = currentActiveTab.url;
   const currentUrlObj = new URL(currentUrl);
   const currentHostname = currentUrlObj.hostname;
-  const userId = getExtensionId();
 
   const connectedHomepagesContainer = document.getElementById("connectedHomepages");
-  const buttonContainer = document.getElementById("buttonContainer");
-
-  const response = await fetch(endpoint + "get_connected_homepages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ userId: userId }),
-  });
-  const data = await response.json();
-  const connectedHomepagesSupabase = data.connectedHomepages;
+  const response = await chrome.runtime.sendMessage({ action: "getData" });
+  const connectedHomepagesSupabase = response.connectedHomepages;
 
   let isCurrentPageConnected = false;
-
   connectedHomepagesSupabase.forEach((site) => {
     if (site.hostname === currentHostname) {
       isCurrentPageConnected = true;
@@ -163,24 +166,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     connectedHomepagesContainer.appendChild(entryDiv);
   });
 
-  const connectButton = document.createElement("button");
-  connectButton.className = "connect-button";
-  connectButton.id = "connectButton";
-  if (!isCurrentPageConnected) {
-    connectButton.textContent = `Connect ${currentHostname}`;
-  } else {
-    connectButton.textContent = `Update ${currentHostname}`;
-  }
-  buttonContainer.appendChild(connectButton);
+  const buttonContainer = document.getElementById("buttonContainer");
+  buttonContainer.innerHTML = "";
 
-  const downloadButton = document.createElement("button");
-  downloadButton.className = "download-button";
-  downloadButton.id = "downloadButton";
-  downloadButton.textContent = `Download Extension`;
+  const connectButtonText = isCurrentPageConnected ? `Update Connection to ${currentHostname}` : `Connect ${currentHostname}`;
+  const connectButton = createButton("connect-button", "connectButton", connectButtonText);
+  const downloadButton = createButton("download-button", "downloadButton", "Update CrowCollect");
+
+  buttonContainer.appendChild(connectButton);
   buttonContainer.appendChild(downloadButton);
 
   loaderContainer.style.display = "none";
+}
 
+document.addEventListener("DOMContentLoaded", async function () {
+  await loadConnectedHomepages();
   document.getElementById("connectButton").addEventListener("click", handleConnectButtonClick);
 
   document.getElementById("downloadButton").addEventListener("click", function () {
@@ -224,7 +224,7 @@ async function downloadAndUpdate(githubRepoContentsUrl, destinationFolder) {
         chrome.downloads.download(
           {
             url: file.download_url,
-            filename: `${destinationFolder}/${file.name}`, // This will save in 'Downloads/crow-collect-extension/'
+            filename: `${destinationFolder}/${file.name}`,
             conflictAction: "overwrite",
             saveAs: false,
           },
