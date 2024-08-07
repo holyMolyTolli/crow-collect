@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Crow Collect</title>
+    <style>
+      body,
+      html {
+        min-width: 420px; /* Set the minimum width of the popup */
+        min-height: 300px; /* Set the minimum height of the popup */
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      #connectButtonContainer,
+      #connectedHomepages {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: left;
+      }
+      .homepage-entry {
+        display: flex;
+        justify-content: space-between;
+        width: 100%; /* Adjust based on your popup width */
+        margin-bottom: 10px;
+      }
+      .homepage-button {
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 240px; /* Define a fixed width for all buttons */
+        text-align: center; /* Center the text inside the button */
+      }
+      .connect-button {
+        background-color: #4caf50;
+        border: 1px solid #398439;
+        color: #f0f0f0;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%; /* Define a fixed width for all buttons */
+        text-align: center; /* Center the text inside the button */
+      }
+      .update-info {
+        margin-left: 10px;
+        align-self: center;
+      }
+      h1 {
+        padding: 10px;
+        text-align: center;
+      }
+      #loaderContainer {
+        /* Assuming this is a new div wrapping the loader */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%; /* Adjust height as necessary */
+      }
+      .loader {
+        border: 4px solid #f3f3f3; /* Light grey background */
+        border-top: 4px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 2s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CrowCollect</h1>
+    <div id="connectedHomepages"></div>
+    <div id="loaderContainer"></div>
+    <div id="connectButtonContainer"></div>
+    <script src="popup.js"></script>
+    <!-- <div id="content"></div>
+    <script src="get_external_popup.js"></script> -->
+  </body>
+</html>
