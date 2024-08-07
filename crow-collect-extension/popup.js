@@ -155,6 +155,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   const currentHostname = currentUrlObj.hostname;
   const userId = getExtensionId(); // = await getUserId();
 
+  const connectedHomepagesContainer = document.getElementById("connectedHomepages");
+  const buttonContainer = document.getElementById("connectButtonContainer");
+
   const response = await fetch(endpoint + "get_connected_homepages", {
     method: "POST",
     headers: {
@@ -164,9 +167,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
   const data = await response.json();
   const connectedHomepagesSupabase = data.connectedHomepages;
-
-  const connectedHomepagesContainer = document.getElementById("connectedHomepages");
-  const buttonContainer = document.getElementById("connectButtonContainer");
 
   let isCurrentPageConnected = false;
 
@@ -181,166 +181,40 @@ document.addEventListener("DOMContentLoaded", async function () {
   const connectButton = document.createElement("button");
   connectButton.className = "connect-button";
   connectButton.id = "connectButton";
-  buttonContainer.appendChild(connectButton);
-
   if (!isCurrentPageConnected) {
     connectButton.textContent = `Connect ${currentHostname}`;
   } else {
     connectButton.textContent = `Update ${currentHostname}`;
   }
-  loaderContainer.style.display = "none";
+  buttonContainer.appendChild(connectButton);
 
   const downloadButton = document.createElement("button");
   downloadButton.className = "download-button";
   downloadButton.id = "downloadButton";
-  buttonContainer.appendChild(downloadButton);
   downloadButton.textContent = `Download Extension`;
+  buttonContainer.appendChild(downloadButton);
+
+  loaderContainer.style.display = "none";
 
   document.getElementById("connectButton").addEventListener("click", handleConnectButtonClick);
 
-  
   document.getElementById("downloadButton").addEventListener("click", function () {
-    const downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
-    downloadAndUpdate(downloadFolder);
+    var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
+    var destinationFolder = "crow-collect-extension";
+    downloadAndUpdate(downloadFolder, destinationFolder);
+
+    var downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension/images?ref=main";
+    var destinationFolder = "crow-collect-extension/images";
+    downloadAndUpdate(downloadFolder, destinationFolder);
+
   });
 });
-
-const extensionFolder = "crow-collect-extension";
-
-// async function downloadAndUpdate() {
-//   console.log("in downloadAndUpdate");
-//   const response = await fetch(downloadFolder);
-//   console.log("response:", response);
-//   const blob = await response.blob();
-//   console.log("blob:", blob);
-//   const url = URL.createObjectURL(blob);
-//   console.log("url:", url);
-
-//   // const chromeurl = chrome.runtime.getURL('popup.html');
-//   // console.log("chromeurl:", chromeurl); // > chrome-extension://hpdpciikpmdbcpegpjfhehdhkmckhcla/popup.html
-
-//   chrome.downloads.download(
-//     {
-//       url: url,
-//       filename: "crow-collect-extension",
-//       conflictAction: "overwrite",
-//     },
-//     async (downloadId) => {
-//       console.log("Download completed:", downloadId);
-//     },
-//   );
-// }
-
-// document.addEventListener("DOMContentLoaded", async function () {
-//   const downloadFolder = "https://github.com/holyMolyTolli/crow-collect/tree/main/crow-collect-extension";
-//   document.getElementById("downloadButton").addEventListener("click", () => {
-//     downloadAndUpdate(downloadFolder);
-//   });
-// });
-
-// async function fetchFilesFromGitHub(downloadFolder) {
-//   try {
-//     const response = await fetch(downloadFolder);
-//     response = await response.json();
-//     console.log("response:", response);
-//     return response;
-//   } catch (error) {
-//     console.error("Error fetching files:", error);
-//     throw error; // Rethrow to handle upstream
-//   }
-// }
-
-// async function downloadAndUpdate(githubRepoContentsUrl) {
-//   console.log("Starting download process...");
-
-//   try {
-//     // Fetch list of files from GitHub repository
-//     const filesData = await fetchFilesFromGitHub(githubRepoContentsUrl);
-
-//     const dirHandle = await window.showDirectoryPicker();
-
-//     for (const file of filesData) {
-//       if (file.type === "file" && file.download_url) {
-//         // Ensure it's a file and has a downloadable URL
-//         const fileBlob = await fetch(file.download_url).then((res) => res.blob());
-//         const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
-//         const writable = await fileHandle.createWritable();
-//         await writable.write(fileBlob);
-//         await writable.close();
-//         console.log(`${file.name} saved successfully.`);
-//       }
-//     }
-//   } catch (error) {
-//     console.error("Error during file download and save:", error);
-//   }
-// }
-
-// document.addEventListener("DOMContentLoaded", function () {
-//   document.getElementById("downloadButton").addEventListener("click", function () {
-//     const downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
-//     downloadAndUpdate(downloadFolder);
-//   });
-// });
-
-// async function fetchFilesFromGitHub(apiUrl) {
-//   try {
-//     const response = await fetch(apiUrl, {
-//       headers: {
-//         'Accept': 'application/vnd.github.v3+json', // GitHub API version header
-//         // 'Authorization': 'token YOUR_GITHUB_TOKEN' // Uncomment and use as needed for higher rate limits or private repos
-//       }
-//     });
-//     if (!response.ok) {
-//       throw new Error('Network response was not ok ' + response.statusText);
-//     }
-//     return await response.json();
-//   } catch (error) {
-//     console.error("Error fetching files:", error);
-//     throw error; // Rethrow to handle upstream
-//   }
-// }
-
-// async function downloadAndUpdate(githubRepoContentsUrl) {
-//   console.log("Starting download process...");
-
-//   try {
-//     console.log("Showing directory picker...");
-//     const dirHandle = await window.showDirectoryPicker();
-//     console.log("Directory picker shown successfully.");
-
-//     console.log("Fetching files data...");
-//     const filesData = await fetchFilesFromGitHub(githubRepoContentsUrl);
-//     console.log("Files data fetched successfully.");
-
-//     for (const file of filesData) {
-//       if (file.type === "file" && file.download_url) {
-//         console.log(`Processing file: ${file.name}`);
-//         const fileBlob = await fetch(file.download_url).then(res => res.blob());
-//         const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
-//         const writable = await fileHandle.createWritable();
-//         await writable.write(fileBlob);
-//         await writable.close();
-//         console.log(`${file.name} saved successfully.`);
-//       }
-//     }
-//   } catch (error) {
-//     console.error("Error during file download and save:", error);
-//   }
-// }
-
-// document.addEventListener("DOMContentLoaded", function () {
-//   document.getElementById("downloadButton").addEventListener("click", function () {
-//     const downloadFolder = "https://api.github.com/repos/holyMolyTolli/crow-collect/contents/crow-collect-extension?ref=main";
-//     downloadAndUpdate(downloadFolder);
-//   });
-// });
 
 async function fetchFilesFromGitHub(apiUrl) {
   try {
     const response = await fetch(apiUrl, {
       headers: {
         Accept: "application/vnd.github.v3+json",
-        // 'Authorization': 'token YOUR_GITHUB_TOKEN' // For higher limits or private repos
       },
     });
     if (!response.ok) {
@@ -353,14 +227,12 @@ async function fetchFilesFromGitHub(apiUrl) {
   }
 }
 
-async function downloadAndUpdate(githubRepoContentsUrl) {
+async function downloadAndUpdate(githubRepoContentsUrl, destinationFolder) {
   console.log("Starting download process...");
 
   try {
     console.log("Fetching files data...");
     const filesData = await fetchFilesFromGitHub(githubRepoContentsUrl);
-
-    const repoName = "crow-collect-extension"; // Set this as your folder name under Downloads
 
     for (const file of filesData) {
       if (file.type === "file" && file.download_url) {
@@ -368,7 +240,7 @@ async function downloadAndUpdate(githubRepoContentsUrl) {
         chrome.downloads.download(
           {
             url: file.download_url,
-            filename: `${repoName}/${file.name}`, // This will save in 'Downloads/crow-collect-extension/'
+            filename: `${destinationFolder}/${file.name}`, // This will save in 'Downloads/crow-collect-extension/'
             conflictAction: "overwrite",
             saveAs: false,
           },
