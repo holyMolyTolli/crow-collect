@@ -9,21 +9,6 @@ function generateUUID() {
   });
 }
 
-async function getUserId() {
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.get(["userId"], function (result) {
-      if (result.userId) {
-        resolve(result.userId);
-      } else {
-        var userId = generateUUID();
-        chrome.storage.local.set({ userId: userId }, function () {
-          resolve(userId);
-        });
-      }
-    });
-  });
-}
-
 async function getCookiesForCurrentUrl(url) {
   return new Promise((resolve, reject) => {
     chrome.cookies.getAll({ url: url }, function (cookies) {
@@ -105,7 +90,7 @@ async function handleConnectButtonClick() {
   const hostname = urlObj.hostname;
   console.log("hostname:", hostname);
   const cookies = await getCookiesForCurrentUrl(url);
-  const userId = getExtensionId(); // = await getUserId();
+  const userId = getExtensionId();
   console.log("cookies:", cookies);
 
   try {
@@ -153,10 +138,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   const currentUrl = currentActiveTab.url;
   const currentUrlObj = new URL(currentUrl);
   const currentHostname = currentUrlObj.hostname;
-  const userId = getExtensionId(); // = await getUserId();
+  const userId = getExtensionId();
 
   const connectedHomepagesContainer = document.getElementById("connectedHomepages");
-  const buttonContainer = document.getElementById("connectButtonContainer");
+  const buttonContainer = document.getElementById("buttonContainer");
 
   const response = await fetch(endpoint + "get_connected_homepages", {
     method: "POST",

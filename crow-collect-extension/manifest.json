@@ -1,9 +1,8 @@
-
 {
   "manifest_version": 3,
   "name": "CrowCollect",
   "version": "1.0",
-  "permissions": ["storage", "activeTab", "cookies", "downloads"],
+  "permissions": ["activeTab", "cookies", "downloads"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
