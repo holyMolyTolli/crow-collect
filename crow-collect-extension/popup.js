@@ -274,17 +274,26 @@ async function handleConnectButtonClick() {
       }),
     });
     data = await response.json();
-    var newlyConnectedHomepage = data.response;
+    console.log("data:", data);
+    if (data.success) {
+      console.log("Success, data.response", data.response);
+      var newlyConnectedHomepage = data.response;
 
-    updateConnectedHomepagesEntry("connectedHomepages", newlyConnectedHomepage.hostname, newlyConnectedHomepage.timestamp);
+      updateConnectedHomepagesEntry("connectedHomepages", newlyConnectedHomepage.hostname, newlyConnectedHomepage.timestamp);
 
-    document.getElementById("connectButton").textContent = `Update Connection to ${hostname}`;
+      document.getElementById("connectButton").textContent = `Update Connection to ${hostname}`;
 
-    console.log("Sending message FETCHDATA");
-    await chrome.runtime.sendMessage({ action: "fetchData" });
+      console.log("Sending message FETCHDATA");
+      await chrome.runtime.sendMessage({ action: "fetchData" });
 
-    const { currentHostname, isCurrentPageConnected } = await updateConnectedHomepages();
-    updateConnectButton(currentHostname, isCurrentPageConnected);
+      const { currentHostname, isCurrentPageConnected } = await updateConnectedHomepages();
+      updateConnectButton(currentHostname, isCurrentPageConnected);
+
+      alert("Connection updated successfully!");
+    } else {
+      alert("Failed to update connection");
+      console.log("Error", data.response);
+    }
   } catch (error) {
     console.error("Error:", error);
   }
@@ -292,11 +301,11 @@ async function handleConnectButtonClick() {
 
 document.addEventListener("DOMContentLoaded", async function () {
   createContainerButtons();
-  addLoader();
-  const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
-  updateConnectButton(currentHostname, isConnected) 
-  hideLoader();
-
   document.getElementById("connectButton").addEventListener("click", handleConnectButtonClick);
   document.getElementById("downloadButton").addEventListener("click", handleDownloadButtonClick);
+
+  addLoader();
+  const { currentHostname, isCurrentPageConnected } = await loadConnectedHomepages();
+  updateConnectButton(currentHostname, isCurrentPageConnected);
+  hideLoader();
 });
