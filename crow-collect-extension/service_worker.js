@@ -1,6 +1,6 @@
 // service_worker.js
 // const endpoint = "https://holymolytolli--backend-receipt-collector-endpoint-py-04cd48-dev.modal.run/";
-var endpoint = "https://holymolytolli--crow-collect-endpoint-fastapi-app.modal.run";
+const endpoint = "https://holymolytolli--crow-collect-endpoint-fastapi-app.modal.run/";
 
 let cachedData = null;
 let fetchPromise = null; // Promise to handle simultaneous fetch requests
